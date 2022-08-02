@@ -18,13 +18,14 @@ package common
 
 import (
 	"fmt"
-	"github.com/kubesphere/kubekey/pkg/core/connector"
-	"github.com/kubesphere/kubekey/pkg/core/util"
-	"github.com/pkg/errors"
 	"os"
 	"os/exec"
 	"os/user"
 	"runtime"
+
+	"github.com/kubesphere/kubekey/pkg/core/connector"
+	"github.com/kubesphere/kubekey/pkg/core/util"
+	"github.com/pkg/errors"
 )
 
 type LocalRuntime struct {
@@ -37,6 +38,7 @@ func NewLocalRuntime(debug, ingoreErr bool) (LocalRuntime, error) {
 	if err != nil {
 		return localRuntime, err
 	}
+	// fixme 这里还必须使用root用户，那后面执行命令干嘛还需要加sudo啊
 	if u.Username != "root" {
 		return localRuntime, fmt.Errorf("current user is %s. Please use root", u.Username)
 	}
@@ -58,6 +60,7 @@ func NewLocalRuntime(debug, ingoreErr bool) (LocalRuntime, error) {
 	host.Name = name
 	host.Address = util.LocalIP()
 	host.InternalAddress = util.LocalIP()
+	// TODO, 我要是ssh用的其它端口，这里应该会有问题吧
 	host.Port = 22
 	host.User = u.Name
 	host.Password = ""

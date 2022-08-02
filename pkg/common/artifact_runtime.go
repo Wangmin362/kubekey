@@ -18,12 +18,13 @@ package common
 
 import (
 	"encoding/json"
+	"io/ioutil"
+	"path/filepath"
+
 	kubekeyv1alpha2 "github.com/kubesphere/kubekey/apis/kubekey/v1alpha2"
 	"github.com/kubesphere/kubekey/pkg/core/connector"
 	"github.com/pkg/errors"
-	"io/ioutil"
 	k8syaml "k8s.io/apimachinery/pkg/util/yaml"
-	"path/filepath"
 )
 
 type ArtifactArgument struct {
@@ -57,6 +58,7 @@ func NewArtifactRuntime(arg ArtifactArgument) (*ArtifactRuntime, error) {
 		return nil, errors.Wrapf(err, "Failed to read file %s", fp)
 	}
 
+	// fixme 没看懂这里的操作逻辑，为啥非要先转为把yaml转为json啊？ yaml不是可以直接序列化的嘛，根据git日志，之前确实使用的yaml序列化，但是后来被另外一个人改为了json序列化， 为啥呀。。。。
 	contentToJson, err := k8syaml.ToJSON(fileByte)
 	if err != nil {
 		return nil, errors.Wrap(err, "Unable to convert configuration to json")

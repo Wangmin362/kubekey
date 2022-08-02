@@ -21,12 +21,6 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
-	"github.com/kubesphere/kubekey/pkg/core/logger"
-	"github.com/kubesphere/kubekey/pkg/core/util"
-	"github.com/pkg/errors"
-	"github.com/pkg/sftp"
-	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/agent"
 	"io"
 	"io/ioutil"
 	"net"
@@ -37,6 +31,13 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/kubesphere/kubekey/pkg/core/logger"
+	"github.com/kubesphere/kubekey/pkg/core/util"
+	"github.com/pkg/errors"
+	"github.com/pkg/sftp"
+	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/agent"
 )
 
 type Cfg struct {
@@ -304,6 +305,7 @@ func (c *connection) PExec(cmd string, stdin io.Reader, stdout io.Writer, stderr
 
 		line += string(b)
 
+		// TODO， 输入ssh的密码，这里感觉代码有点丑陋，有没有更合适的方式建立ssh连接呢？
 		if (strings.HasPrefix(line, "[sudo] password for ") || strings.HasPrefix(line, "Password")) && strings.HasSuffix(line, ": ") {
 			_, err = in.Write([]byte(host.GetPassword() + "\n"))
 			if err != nil {
@@ -365,6 +367,7 @@ func (c *connection) Exec(cmd string, host Host) (stdout string, code int, err e
 
 		line += string(b)
 
+		// fixme 重复代码就不能抽取一下嘛。。。。
 		if (strings.HasPrefix(line, "[sudo] password for ") || strings.HasPrefix(line, "Password")) && strings.HasSuffix(line, ": ") {
 			_, err = in.Write([]byte(host.GetPassword() + "\n"))
 			if err != nil {

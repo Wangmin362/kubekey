@@ -33,6 +33,10 @@ func NewArtifactOptions() *ArtifactOptions {
 }
 
 // NewCmdArtifact creates a new cobra.Command for `kubekey artifact`
+// 该命令用于制作打包制品，也就是打一个离线安装包，离线安装包中主要包含三大部分
+// 1、操作系统ISO文件，主要用于在离线的机器上安装必备的软件，譬如socat, conntrack
+// 2、组件，其中包括：helm, cni, etcd, container-runtime, crictl, harbor
+// 3、安装K8S必备的软件或者感兴趣的镜像，也就是manifest.yaml中的images部分
 func NewCmdArtifact() *cobra.Command {
 	o := NewArtifactOptions()
 	cmd := &cobra.Command{

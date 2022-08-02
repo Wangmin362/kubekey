@@ -19,13 +19,15 @@ package connector
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+
 	"github.com/kubesphere/kubekey/pkg/core/common"
 	"github.com/kubesphere/kubekey/pkg/core/logger"
 	"github.com/kubesphere/kubekey/pkg/core/util"
-	"os"
-	"path/filepath"
 )
 
+// 一个Runner实际上可以理解为对于一台主机的连接
 type Runner struct {
 	Conn  Connection
 	Debug bool
@@ -73,6 +75,7 @@ func (r *Runner) SudoCmd(cmd string, printOutput bool) (string, error) {
 
 func (r *Runner) Fetch(local, remote string) error {
 	if r.Conn == nil {
+		// fixme 这里日志有问题，你的connection不一定就是ssh连接，可能是其它连接啊
 		return errors.New("no ssh connection available")
 	}
 

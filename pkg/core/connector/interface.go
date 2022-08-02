@@ -17,20 +17,27 @@
 package connector
 
 import (
-	"github.com/kubesphere/kubekey/pkg/core/cache"
 	"io"
 	"os"
+
+	"github.com/kubesphere/kubekey/pkg/core/cache"
 )
 
+// Connection  这里的一个Connection是一个SSH链接，可以执行命令，实际上目前也只有SSH这么一种实现
 type Connection interface {
+	// fixme 为什么这里不增加一个 GetHost() (Host, error)方法，这样后面所有的方法就不需要再带上host参数了，可以简便很多啊
+
 	Exec(cmd string, host Host) (stdout string, code int, err error)
+	// TODO 这两个方法是咋用的？
 	PExec(cmd string, stdin io.Reader, stdout io.Writer, stderr io.Writer, host Host) (code int, err error)
+	// TODO 把文件从remote拷贝到local?, host势必是remote的host
 	Fetch(local, remote string, host Host) error
 	Scp(local, remote string, host Host) error
 	RemoteFileExist(remote string, host Host) bool
 	RemoteDirExist(remote string, host Host) (bool, error)
 	MkDirAll(path string, mode string, host Host) error
 	Chmod(path string, mode os.FileMode) error
+	// fixme 这个方法好不严谨哦，返回参数应该加上error会好一些吧，链接不一定能正常关闭吧
 	Close()
 }
 
@@ -40,9 +47,11 @@ type Connector interface {
 }
 
 type ModuleRuntime interface {
+	// TODO 如何理解Obj?
 	GetObjName() string
 	SetObjName(name string)
 	GenerateWorkDir() error
+	// TODO 和GetWorkDir方法有啥区别？
 	GetHostWorkDir() string
 	GetWorkDir() string
 	GetIgnoreErr() bool
@@ -55,6 +64,7 @@ type ModuleRuntime interface {
 }
 
 type Runtime interface {
+	// TODO 既然Runner中已经有了Connction了，为什么还需要Get/SetConector?
 	GetRunner() *Runner
 	SetRunner(r *Runner)
 	GetConnector() Connector
@@ -64,6 +74,7 @@ type Runtime interface {
 	ModuleRuntime
 }
 
+// Host 这个应该是对于manifest.yaml中host的一个
 type Host interface {
 	GetName() string
 	SetName(name string)

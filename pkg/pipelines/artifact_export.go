@@ -80,6 +80,7 @@ func NewK3sArtifactExportPipeline(runtime *common.ArtifactRuntime) error {
 }
 
 func ArtifactExport(args common.ArtifactArgument, downloadCmd string) error {
+	// 拼接下载软件的URL
 	args.DownloadCommand = func(path, url string) string {
 		// this is an extension point for downloading tools, for example users can set the timeout, proxy or retry under
 		// some poor network environment. Or users even can choose another cli, it might be wget.
@@ -87,15 +88,18 @@ func ArtifactExport(args common.ArtifactArgument, downloadCmd string) error {
 		return fmt.Sprintf(downloadCmd, path, url)
 	}
 
+	// runtime主要是包含了主机的连接信息，可以通过ssh用来传输命令
 	runtime, err := common.NewArtifactRuntime(args)
 	if err != nil {
 		return err
 	}
 
+	// 必须要安装k8s
 	if len(runtime.Spec.KubernetesDistributions) == 0 {
 		return errors.New("the length of kubernetes distributions can't be 0")
 	}
 
+	// 类型必须一致，不能k8s,k3s混着来
 	pre := runtime.Spec.KubernetesDistributions[0].Type
 	for _, t := range runtime.Spec.KubernetesDistributions {
 		if t.Type != pre {

@@ -43,11 +43,12 @@ var logo = `
 
 `
 
+// Pipeline 管道可以理解为一个流水线
 type Pipeline struct {
-	Name            string
-	Modules         []module.Module
-	Runtime         connector.Runtime
-	SpecHosts       int
+	Name            string            // 流水线的名字
+	Modules         []module.Module   // 流水线需要执行的模块
+	Runtime         connector.Runtime // 运行时的环境，实际上可以理解为需要安装的几台机器的SSH连接
+	SpecHosts       int               // 主机的数量
 	PipelineCache   *cache.Cache
 	ModuleCachePool sync.Pool
 	ModulePostHooks []module.PostHookInterface
@@ -70,6 +71,8 @@ func (p *Pipeline) Start() error {
 	if err := p.Init(); err != nil {
 		return errors.Wrapf(err, "Pipeline[%s] execute failed", p.Name)
 	}
+
+	// 依次执行每个模块，
 	for i := range p.Modules {
 		m := p.Modules[i]
 		if m.IsSkip() {

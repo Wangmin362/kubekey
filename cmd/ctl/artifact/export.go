@@ -18,6 +18,7 @@ package artifact
 
 import (
 	"fmt"
+
 	"github.com/kubesphere/kubekey/cmd/ctl/options"
 	"github.com/kubesphere/kubekey/cmd/ctl/util"
 	"github.com/kubesphere/kubekey/pkg/common"
@@ -58,6 +59,7 @@ func NewCmdArtifactExport() *cobra.Command {
 	return cmd
 }
 
+// Complete 主要是用于补充缺省的参数
 func (o *ArtifactExportOptions) Complete(_ *cobra.Command, _ []string) error {
 	if o.Output == "" {
 		o.Output = "kubekey-artifact.tar.gz"
@@ -74,19 +76,22 @@ func (o *ArtifactExportOptions) Validate(_ []string) error {
 
 func (o *ArtifactExportOptions) Run() error {
 	arg := common.ArtifactArgument{
-		ManifestFile: o.ManifestFile,
-		Output:       o.Output,
+		ManifestFile: o.ManifestFile, // 打包制品的清单文件
+		Output:       o.Output,       // 离线安装包
 		CriSocket:    o.CriSocket,
 		Debug:        o.CommonOptions.Verbose,
 		IgnoreErr:    o.CommonOptions.IgnoreErr,
 	}
 
+	// 开启一个pipeline，用于制作离线安装包
 	return pipelines.ArtifactExport(arg, o.DownloadCmd)
 }
 
 func (o *ArtifactExportOptions) AddFlags(cmd *cobra.Command) {
+	// 用于指定资源清单文件
 	cmd.Flags().StringVarP(&o.ManifestFile, "manifest", "m", "", "Path to a manifest file")
 	cmd.Flags().StringVarP(&o.Output, "output", "o", "", "Path to a output path")
+	// todo 下载软件包的命令格式，估计这里一般很难去修改，如果想要加速应下载，应该怎么设置？
 	cmd.Flags().StringVarP(&o.DownloadCmd, "download-cmd", "", "curl -L -o %s %s",
 		`The user defined command to download the necessary binary files. The first param '%s' is output path, the second param '%s', is the URL`)
 }
