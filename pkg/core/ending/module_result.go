@@ -17,12 +17,14 @@
 package ending
 
 import (
+	"time"
+
 	"github.com/kubesphere/kubekey/pkg/core/common"
 	"github.com/kubesphere/kubekey/pkg/core/connector"
-	"time"
 )
 
 type ModuleResult struct {
+	// 这里应该是想要保存多个主机的执行结果
 	HostResults   map[string]Interface
 	CombineResult error
 	Status        ResultStatus

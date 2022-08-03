@@ -26,7 +26,7 @@ import (
 
 type BaseTaskModule struct {
 	BaseModule
-	Tasks []task.Interface
+	Tasks []task.Interface // 一个模块中可以包含很多个Task
 }
 
 func (b *BaseTaskModule) Init() {
@@ -39,6 +39,7 @@ func (b *BaseTaskModule) Is() string {
 	return TaskModuleType
 }
 
+// 对于模块来说，并没有什么功能，唯一需要执行的是模块中的task，可以猜测，task之间肯定是共享模块的cache，并且共享pipeline cache
 func (b *BaseTaskModule) Run(result *ending.ModuleResult) {
 	for i := range b.Tasks {
 		t := b.Tasks[i]

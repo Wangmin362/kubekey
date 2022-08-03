@@ -33,6 +33,7 @@ import (
 
 func NewArtifactExportPipeline(runtime *common.ArtifactRuntime) error {
 	m := []module.Module{
+		// 检查即将要生成的离线部署包名字是否已经存在
 		&confirm.CheckFileExistModule{FileName: runtime.Arg.Output},
 		&images.CopyImagesToLocalModule{},
 		&binaries.ArtifactBinariesModule{},

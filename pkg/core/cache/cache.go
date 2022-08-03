@@ -18,7 +18,7 @@ package cache
 
 import "sync"
 
-// Cache, Cache用来存放啥内容额哦？
+// Cache, Cache用来存放啥内容哦？
 type Cache struct {
 	store sync.Map
 }

@@ -21,8 +21,9 @@ import (
 	"github.com/kubesphere/kubekey/pkg/core/connector"
 )
 
+// Action 为Task中具体要执行的一个动作的抽象， todo 吐槽一下，感觉这些接口的抽象好相似哦，有没有一种更好的抽象方式
 type Action interface {
 	Execute(runtime connector.Runtime) (err error)
-	Init(cache *cache.Cache, rootCache *cache.Cache)
+	Init(cache *cache.Cache, rootCache *cache.Cache) // 哪里都有你们，有没有一种更好的抽象？
 	AutoAssert(runtime connector.Runtime)
 }

@@ -31,12 +31,14 @@ type Module interface {
 	// fixme 这个也完全看不出来，注释也不写，看代码才知道适用于标记当前模块是那种类型，那为啥返回值不用自定义类型啊。。。。。。
 	Is() string
 	Run(result *ending.ModuleResult)
+	// todo 为啥这里的返回值是 *bool指针类型，为什么不能是bool类型，又不可能修改里面的值
 	Until() (*bool, error)
 	// 模块开始执行时打印的标志语？
 	Slogan()
 	// TODO 自动断言应该怎么使用？ 该方法再什么时候被调用？
 	AutoAssert()
-	// 下面两个hook点有啥区别？
+	// 添加后置hook
 	AppendPostHook(h PostHookInterface)
+	// 执行后置hook
 	CallPostHook(result *ending.ModuleResult) error
 }

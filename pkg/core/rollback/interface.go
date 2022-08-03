@@ -22,6 +22,7 @@ import (
 	"github.com/kubesphere/kubekey/pkg/core/ending"
 )
 
+// todo 还是同样的配方，还是同样的味道
 type Rollback interface {
 	Execute(runtime connector.Runtime, result *ending.ActionResult) (err error)
 	Init(cache *cache.Cache, rootCache *cache.Cache)

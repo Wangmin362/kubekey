@@ -34,22 +34,23 @@ import (
 	"github.com/kubesphere/kubekey/pkg/core/util"
 )
 
+// 本地任务的执行，可以理解为在运行kk二进制文件那台机器上要执行的任务，譬如：离线安装包值作的相关任务
 type LocalTask struct {
 	Name     string
 	Desc     string
-	Prepare  prepare.Prepare
-	Action   action.Action
-	Rollback rollback.Rollback
-	Retry    int
-	Delay    time.Duration
-	Timeout  time.Duration
+	Prepare  prepare.Prepare   // 执行任务的前置检查
+	Action   action.Action     // 一个任务一个Action, 和kubekey的架构图对应上了
+	Rollback rollback.Rollback // fixme 这里应该是action对应的回滚Action，实际上和Action没啥区别，我觉的action.Action和rollback. Rollback接口没啥区别，明显可以统一使用rollback.Rollback接口，没道理需要用两套非常相似的接口啊
+	Retry    int               // 任务执行失败的时候，重新执行次数
+	Delay    time.Duration     // 重新执行任务时的延时时间，总不能失败了就立马执行吧
+	Timeout  time.Duration     // 超时时间，常规参数，没毛病
 
 	PipelineCache *cache.Cache
 	ModuleCache   *cache.Cache
 	Runtime       connector.Runtime
-	tag           string
+	tag           string // todo 这个tag咋用的，感觉整体架构和ansible的架构越来越相了，不知道语义是否和ansible中的一致
 	IgnoreError   bool
-	TaskResult    *ending.TaskResult
+	TaskResult    *ending.TaskResult // action的执行结果
 }
 
 func (l *LocalTask) GetDesc() string {
@@ -87,6 +88,7 @@ func (l *LocalTask) Default() {
 	}
 
 	if l.Timeout <= 0 {
+		// 默认的超时时间为两个小时
 		l.Timeout = DefaultTimeout * time.Minute
 	}
 }
@@ -100,6 +102,7 @@ func (l *LocalTask) Execute() *ending.TaskResult {
 		Name: common.LocalHost,
 	}
 
+	// todo w为啥这里在执行前需要拷贝一次运行时候环境？任务在执行的时候难道还有修改运行时环境的需求？
 	selfRuntime := l.Runtime.Copy()
 	l.RunWithTimeout(selfRuntime, host)
 
@@ -129,6 +132,7 @@ func (l *LocalTask) RunWithTimeout(runtime connector.Runtime, host connector.Hos
 	}
 }
 
+// Run Task的Run方法肯定是在执行Action撒
 func (l *LocalTask) Run(runtime connector.Runtime, host connector.Host, resCh chan error) {
 	var res error
 	defer func() {
@@ -142,9 +146,9 @@ func (l *LocalTask) Run(runtime connector.Runtime, host connector.Host, resCh ch
 		Host: host,
 	})
 
-	l.Prepare.Init(l.ModuleCache, l.PipelineCache)
-	l.Prepare.AutoAssert(runtime)
-	if ok, err := l.WhenWithRetry(runtime, host); !ok {
+	l.Prepare.Init(l.ModuleCache, l.PipelineCache)      // 初始化prepare,也就是前置检查的准备工作
+	l.Prepare.AutoAssert(runtime)                       // 断言，看看具体后面具体的任务时怎么执行的
+	if ok, err := l.WhenWithRetry(runtime, host); !ok { // prepare的检测执行
 		if err != nil {
 			res = err
 			return
@@ -154,9 +158,9 @@ func (l *LocalTask) Run(runtime connector.Runtime, host connector.Host, resCh ch
 		}
 	}
 
-	l.Action.Init(l.ModuleCache, l.PipelineCache)
-	l.Action.AutoAssert(runtime)
-	if err := l.ExecuteWithRetry(runtime, host); err != nil {
+	l.Action.Init(l.ModuleCache, l.PipelineCache)             // action的初始化
+	l.Action.AutoAssert(runtime)                              // action的自动断言
+	if err := l.ExecuteWithRetry(runtime, host); err != nil { // 执行实际的动作，Task实际起作用就是从这里开始的
 		res = err
 		return
 	}
@@ -177,7 +181,7 @@ func (l *LocalTask) WhenWithRetry(runtime connector.Runtime, host connector.Host
 			logger.Log.Infof("retry: [%s]", host.GetName())
 			time.Sleep(l.Delay)
 			continue
-		} else {
+		} else { // 只有前置检查出现错误了才需要重新执行
 			err = nil
 			pass = res
 			break
@@ -188,9 +192,11 @@ func (l *LocalTask) WhenWithRetry(runtime connector.Runtime, host connector.Host
 }
 
 func (l *LocalTask) When(runtime connector.Runtime) (bool, error) {
-	if l.Prepare == nil {
+	if l.Prepare == nil { // 没有前置检查就认为可以执行
 		return true, nil
 	}
+
+	// 前置检测
 	if ok, err := l.Prepare.PreCheck(runtime); err != nil {
 		return false, err
 	} else if !ok {
@@ -202,7 +208,7 @@ func (l *LocalTask) When(runtime connector.Runtime) (bool, error) {
 func (l *LocalTask) ExecuteWithRetry(runtime connector.Runtime, host connector.Host) error {
 	err := fmt.Errorf("[%s] exec failed after %d retires: ", l.Name, l.Retry)
 	for i := 0; i < l.Retry; i++ {
-		e := l.Action.Execute(runtime)
+		e := l.Action.Execute(runtime) // 执行action
 		if e != nil {
 			logger.Log.Messagef(host.GetName(), e.Error())
 

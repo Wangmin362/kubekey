@@ -20,6 +20,9 @@ import (
 	"github.com/kubesphere/kubekey/pkg/core/connector"
 )
 
+// todo 没理解为为啥注入了运行时的环境，就被称为FastPrepare，感觉这个命名还是有待商榷
+// 另外，BasePrepare中已经的PreCheck方法已经注入了运行时环境，为什么还需要这个实现，
+// 从IDEA的提示看来，这个实现也从来没有被用到过
 type FastPrepare struct {
 	BasePrepare
 	Inject func(runtime connector.Runtime) (bool, error)

@@ -37,14 +37,14 @@ import (
 type RemoteTask struct {
 	Name        string
 	Desc        string
-	Hosts       []connector.Host
-	Prepare     prepare.Prepare
-	Action      action.Action
-	Rollback    rollback.Rollback
-	Parallel    bool
-	Retry       int
-	Delay       time.Duration
-	Timeout     time.Duration
+	Hosts       []connector.Host  // 比起local_task多了这个参数，远程任务的执行通常都会需要在多个节点上执行，这个参数显然时必须的
+	Prepare     prepare.Prepare   // 前置检测
+	Action      action.Action     // 需要执行的任务
+	Rollback    rollback.Rollback // 任务的回滚动作
+	Parallel    bool              // 是否支持并发，显然多个主机是可以并发的，local_task没有这个参数也很合理
+	Retry       int               // 重试次数
+	Delay       time.Duration     // 重试延时
+	Timeout     time.Duration     // 超时时间
 	Concurrency float64
 
 	PipelineCache *cache.Cache
@@ -52,7 +52,7 @@ type RemoteTask struct {
 	Runtime       connector.Runtime
 	tag           string
 	IgnoreError   bool
-	TaskResult    *ending.TaskResult
+	TaskResult    *ending.TaskResult // 任务执行结果
 }
 
 func (t *RemoteTask) GetDesc() string {
@@ -63,7 +63,7 @@ func (t *RemoteTask) Init(runtime connector.Runtime, moduleCache *cache.Cache, p
 	t.ModuleCache = moduleCache
 	t.PipelineCache = pipelineCache
 	t.Runtime = runtime
-	t.Default()
+	t.Default() // 设置默认值
 }
 
 func (t *RemoteTask) Execute() *ending.TaskResult {
@@ -90,7 +90,7 @@ func (t *RemoteTask) Execute() *ending.TaskResult {
 			t.RunWithTimeout(ctx, selfRuntime, t.Hosts[i], i, wg, routinePool)
 		}
 	}
-	wg.Wait()
+	wg.Wait() // 等待所有的主机执行完毕
 
 	if t.TaskResult.IsFailed() {
 		t.TaskResult.ErrResult()
@@ -187,6 +187,7 @@ func (t *RemoteTask) When(runtime connector.Runtime) (bool, error) {
 	return true, nil
 }
 
+// WhenWithRetry fixme 和local_task一毛一样，处理一下会比较好
 func (t *RemoteTask) WhenWithRetry(runtime connector.Runtime) (bool, error) {
 	pass := false
 	err := fmt.Errorf("pre-check exec failed after %d retires", t.Retry)

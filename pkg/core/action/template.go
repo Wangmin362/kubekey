@@ -18,16 +18,17 @@ package action
 
 import (
 	"fmt"
+	"path/filepath"
+	"text/template"
+
 	"github.com/kubesphere/kubekey/pkg/core/connector"
 	"github.com/kubesphere/kubekey/pkg/core/util"
 	"github.com/pkg/errors"
-	"path/filepath"
-	"text/template"
 )
 
 type Template struct {
 	BaseAction
-	Template *template.Template
+	Template *template.Template // 模板渲染
 	Dst      string
 	Data     util.Data
 }
@@ -38,11 +39,13 @@ func (t *Template) Execute(runtime connector.Runtime) error {
 		return errors.Wrap(errors.WithStack(err), fmt.Sprintf("render template %s failed", t.Template.Name()))
 	}
 
+	// 把渲染好的文件写入到文件当中
 	fileName := filepath.Join(runtime.GetHostWorkDir(), t.Template.Name())
 	if err := util.WriteFile(fileName, []byte(templateStr)); err != nil {
 		return errors.Wrap(errors.WithStack(err), fmt.Sprintf("write file %s failed", fileName))
 	}
 
+	// 拷贝到远程主机当中，远程主机的ssh在运行时环境当中
 	if err := runtime.GetRunner().SudoScp(fileName, t.Dst); err != nil {
 		return errors.Wrap(errors.WithStack(err), fmt.Sprintf("scp file %s to remote %s failed", fileName, t.Dst))
 	}

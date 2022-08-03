@@ -27,9 +27,9 @@ import (
 type BaseModule struct {
 	Name          string
 	Desc          string
-	Skip          bool
-	ModuleCache   *cache.Cache
-	PipelineCache *cache.Cache
+	Skip          bool         // 是否跳过当前模块，
+	ModuleCache   *cache.Cache // 模块私有缓存
+	PipelineCache *cache.Cache // 共享使用Pipeline缓存
 	Runtime       connector.ModuleRuntime
 	PostHook      []PostHookInterface
 }
@@ -38,6 +38,7 @@ func (b *BaseModule) IsSkip() bool {
 	return b.Skip
 }
 
+// fixme，还是想吐槽一下Default这个名字，不看代码完全看不出想要干嘛，这里无非是对于对象的初始化嘛。。。。
 func (b *BaseModule) Default(runtime connector.Runtime, pipelineCache *cache.Cache, moduleCache *cache.Cache) {
 	b.Runtime = runtime
 	b.PipelineCache = pipelineCache

@@ -80,6 +80,7 @@ func (p *Pipeline) Start() error {
 		}
 
 		moduleCache := p.newModuleCache()
+		// 从这里可以看出，多个Module共享Pipeline的cache，并且每个module还有自己单独的cache
 		m.Default(p.Runtime, p.PipelineCache, moduleCache)
 		m.AutoAssert()
 		m.Init()

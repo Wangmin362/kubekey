@@ -23,6 +23,6 @@ import (
 
 type Prepare interface {
 	PreCheck(runtime connector.Runtime) (bool, error)
-	Init(cache *cache.Cache, rootCache *cache.Cache)
-	AutoAssert(runtime connector.Runtime)
+	Init(cache *cache.Cache, rootCache *cache.Cache) // 这个参数的接口签名为啥不是 Init(moduleCache *cache.Cache, pipelineCache *cache.Cache) 如何理解这里的 rootCache，=
+	AutoAssert(runtime connector.Runtime)            // 自动断言，这玩意应该是和具体的某个具体的任务是相关的，该接口和PreCheck接口有啥区别？
 }
