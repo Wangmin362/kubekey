@@ -118,9 +118,11 @@ func (c *CheckFileExistModule) Init() {
 	c.Desc = "Check file if is existed"
 
 	check := &task.LocalTask{
-		Name:   "CheckExist",
-		Desc:   "Check output file if existed",
-		Action: &CheckFile{FileName: c.FileName},
+		Name: "CheckExist",
+		Desc: "Check output file if existed",
+		// 这个action仅仅是检测文件是否存在，如果已经存在了，那么用户必须统一覆盖，否则就直接退出了
+		Action: &CheckFile{FileName: c.FileName}, // 检测文件是否存在的Action, 由于文件的检测并没有实际做什么操作，所以这里也并没有回滚的回调
+
 	}
 
 	c.Tasks = []task.Interface{

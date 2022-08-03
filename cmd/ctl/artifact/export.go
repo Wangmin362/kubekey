@@ -29,10 +29,10 @@ import (
 type ArtifactExportOptions struct {
 	CommonOptions *options.CommonOptions
 
-	ManifestFile string
-	Output       string
+	ManifestFile string // manifest.yaml资源清单的文件路径
+	Output       string // 离线安装包的包名
 	CriSocket    string
-	DownloadCmd  string
+	DownloadCmd  string // 各种软件包的下载方式
 }
 
 func NewArtifactExportOptions() *ArtifactExportOptions {

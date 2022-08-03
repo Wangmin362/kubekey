@@ -46,7 +46,7 @@ func NewCmdArtifact() *cobra.Command {
 
 	o.CommonOptions.AddCommonFlag(cmd)
 
-	cmd.AddCommand(NewCmdArtifactExport())
+	cmd.AddCommand(NewCmdArtifactExport()) // 制作离线安装包
 	cmd.AddCommand(images.NewCmdArtifactImages())
 	return cmd
 }

@@ -18,12 +18,13 @@ package images
 
 import (
 	"fmt"
+	"os"
+
 	kubekeyapiv1alpha2 "github.com/kubesphere/kubekey/apis/kubekey/v1alpha2"
 	"github.com/kubesphere/kubekey/pkg/common"
 	"github.com/kubesphere/kubekey/pkg/core/connector"
 	"github.com/kubesphere/kubekey/pkg/core/logger"
 	"github.com/pkg/errors"
-	"os"
 )
 
 const (
@@ -57,7 +58,7 @@ func (image Image) ImageRepo() string {
 	var prefix string
 
 	if os.Getenv("KKZONE") == "cn" {
-		if image.RepoAddr == "" || image.RepoAddr == cnRegistry {
+		if image.RepoAddr == "" || image.RepoAddr == cnRegistry { // 从这里可以看出，镜像可以不指定仓库地址，如果声明了环境变量KKZONE=cn，那么kk会自动使用阿里云的镜像仓库
 			image.RepoAddr = cnRegistry
 			image.NamespaceOverride = cnNamespaceOverride
 		}

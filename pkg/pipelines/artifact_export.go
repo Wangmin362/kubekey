@@ -33,9 +33,8 @@ import (
 
 func NewArtifactExportPipeline(runtime *common.ArtifactRuntime) error {
 	m := []module.Module{
-		// 检查即将要生成的离线部署包名字是否已经存在
-		&confirm.CheckFileExistModule{FileName: runtime.Arg.Output},
-		&images.CopyImagesToLocalModule{},
+		&confirm.CheckFileExistModule{FileName: runtime.Arg.Output}, // 检查即将要生成的离线部署包名字是否已经存在，如果已经存在，用户必须同意kk覆盖该文件，否则直接退出程序
+		&images.CopyImagesToLocalModule{},                           // todo 这一步没有看明白，命名镜像都没有下载下来
 		&binaries.ArtifactBinariesModule{},
 		&artifact.RepositoryModule{},
 		&artifact.ArchiveModule{},

@@ -37,7 +37,7 @@ func (p *PullModule) Init() {
 	pull := &task.RemoteTask{
 		Name:     "PullImages",
 		Desc:     "Start to pull images on all nodes",
-		Hosts:    p.Runtime.GetAllHosts(),
+		Hosts:    p.Runtime.GetAllHosts(), // todo 这里为什么要得到所有的主机，直接在kk所在的主机上拉取需要的镜像不就好了？
 		Action:   new(PullImage),
 		Parallel: true,
 	}

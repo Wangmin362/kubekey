@@ -331,7 +331,7 @@ func (c *CheckFile) Execute(runtime connector.Runtime) error {
 				switch input {
 				case "yes", "y":
 					stop = true
-				case "no", "n":
+				case "no", "n": // fixme 回答no就直接退出，这里的交互可以人性化一点嘛，譬如让用户输入一个新的文件名不就好了
 					os.Exit(0)
 				}
 			}
