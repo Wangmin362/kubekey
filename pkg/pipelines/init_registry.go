@@ -18,6 +18,7 @@ package pipelines
 
 import (
 	"fmt"
+
 	"github.com/kubesphere/kubekey/pkg/artifact"
 	"github.com/kubesphere/kubekey/pkg/binaries"
 	"github.com/kubesphere/kubekey/pkg/bootstrap/os"
@@ -33,13 +34,13 @@ func NewInitRegistryPipeline(runtime *common.KubeRuntime) error {
 	noArtifact := runtime.Arg.Artifact == ""
 
 	m := []module.Module{
-		&precheck.GreetingsModule{},
-		&artifact.UnArchiveModule{Skip: noArtifact},
-		&binaries.RegistryPackageModule{},
-		&os.ConfigureOSModule{},
-		&registry.RegistryCertsModule{},
-		&registry.InstallRegistryModule{},
-		&filesystem.ChownWorkDirModule{},
+		&precheck.GreetingsModule{},                 // 打印提示语
+		&artifact.UnArchiveModule{Skip: noArtifact}, // 解压缩离线安装包
+		&binaries.RegistryPackageModule{},           // 下载镜像仓库安装包，todo 如果是离线安装的方式，这一步应该不需要执行的吧，没有看到相应的控制逻辑
+		&os.ConfigureOSModule{},                     // 生成初始化系统的脚本 /usr/local/bin/kube-scripts/initOS.sh
+		&registry.RegistryCertsModule{},             // 证书
+		&registry.InstallRegistryModule{},           // 安装镜像仓库
+		&filesystem.ChownWorkDirModule{},            // 修改工作目录的权限
 	}
 
 	p := pipeline.Pipeline{

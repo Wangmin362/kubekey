@@ -40,6 +40,6 @@ func NewCmdInit() *cobra.Command {
 	}
 	o.CommonOptions.AddCommonFlag(cmd)
 	cmd.AddCommand(NewCmdInitOs())
-	cmd.AddCommand(NewCmdInitRegistry())
+	cmd.AddCommand(NewCmdInitRegistry()) // 安装私有仓库
 	return cmd
 }
