@@ -34,12 +34,12 @@ import (
 func NewArtifactExportPipeline(runtime *common.ArtifactRuntime) error {
 	m := []module.Module{
 		&confirm.CheckFileExistModule{FileName: runtime.Arg.Output}, // 检查即将要生成的离线部署包名字是否已经存在，如果已经存在，用户必须同意kk覆盖该文件，否则直接退出程序
-		&images.CopyImagesToLocalModule{},                           // todo 这一步没有看明白，命名镜像都没有下载下来
-		&binaries.ArtifactBinariesModule{},
-		&artifact.RepositoryModule{},
-		&artifact.ArchiveModule{},
-		&filesystem.ChownOutputModule{},
-		&filesystem.ChownWorkDirModule{},
+		&images.CopyImagesToLocalModule{},                           // 下载镜像，保存的方式应该就是遵守了OCI的方式
+		&binaries.ArtifactBinariesModule{},                          // 下载二进制安装文件，譬如etcd, kubeadm, kubelet, kubectl, kubecni, helm, crictl, runc, containerd
+		&artifact.RepositoryModule{},                                // 下载IOS文件
+		&artifact.ArchiveModule{},                                   // 文件归档，实际上可以理解为把之前所有下载好的文件压缩为 kubekey-artifact.tar.gz文件
+		&filesystem.ChownOutputModule{},                             // 利用chmod命令，改变文件的 uid gid
+		&filesystem.ChownWorkDirModule{},                            // 利用chmod命令，改变工作目录的权限
 	}
 
 	p := pipeline.Pipeline{

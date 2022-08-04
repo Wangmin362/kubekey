@@ -18,6 +18,8 @@ package binaries
 
 import (
 	"fmt"
+	"os/exec"
+
 	kubekeyapiv1alpha2 "github.com/kubesphere/kubekey/apis/kubekey/v1alpha2"
 	"github.com/kubesphere/kubekey/pkg/common"
 	"github.com/kubesphere/kubekey/pkg/core/cache"
@@ -25,7 +27,6 @@ import (
 	"github.com/kubesphere/kubekey/pkg/core/util"
 	"github.com/kubesphere/kubekey/pkg/files"
 	"github.com/pkg/errors"
-	"os/exec"
 )
 
 // K8sFilesDownloadHTTP defines the kubernetes' binaries that need to be downloaded in advance and downloads them.
@@ -94,6 +95,7 @@ func K8sFilesDownloadHTTP(kubeConf *common.KubeConf, path, version, arch string,
 func KubernetesArtifactBinariesDownload(manifest *common.ArtifactManifest, path, arch, k8sVersion string) error {
 	m := manifest.Spec
 
+	// 根据平台架构，以及需要的K8S版本 拼出各个二进制文件的下载路径
 	etcd := files.NewKubeBinary("etcd", arch, m.Components.ETCD.Version, path, manifest.Arg.DownloadCommand)
 	kubeadm := files.NewKubeBinary("kubeadm", arch, k8sVersion, path, manifest.Arg.DownloadCommand)
 	kubelet := files.NewKubeBinary("kubelet", arch, k8sVersion, path, manifest.Arg.DownloadCommand)
@@ -103,14 +105,16 @@ func KubernetesArtifactBinariesDownload(manifest *common.ArtifactManifest, path,
 	crictl := files.NewKubeBinary("crictl", arch, m.Components.Crictl.Version, path, manifest.Arg.DownloadCommand)
 	binaries := []*files.KubeBinary{kubeadm, kubelet, kubectl, helm, kubecni, etcd}
 
+	// 以下这段代码主要是用于添加容器运行时相关二进制文件的支持
 	containerManagerArr := make([]*files.KubeBinary, 0, 0)
-	containerManagerVersion := make(map[string]struct{})
+	containerManagerVersion := make(map[string]struct{}) // 用于去重
 	for _, c := range m.Components.ContainerRuntimes {
 		if _, ok := containerManagerVersion[c.Type+c.Version]; !ok {
 			containerManagerVersion[c.Type+c.Version] = struct{}{}
 			containerManager := files.NewKubeBinary(c.Type, arch, c.Version, path, manifest.Arg.DownloadCommand)
 			containerManagerArr = append(containerManagerArr, containerManager)
-			if c.Type == "containerd" {
+			// fixme 这里用字符串常量会比较好些
+			if c.Type == "containerd" { // 如果是containerd，那么还需要下载runc容器运行时，如果是docker，那么就已经包含了runc
 				runc := files.NewKubeBinary("runc", arch, kubekeyapiv1alpha2.DefaultRuncVersion, path, manifest.Arg.DownloadCommand)
 				containerManagerArr = append(containerManagerArr, runc)
 			}
@@ -129,7 +133,7 @@ func KubernetesArtifactBinariesDownload(manifest *common.ArtifactManifest, path,
 
 		logger.Log.Messagef(common.LocalHost, "downloading %s %s %s ...", arch, binary.ID, binary.Version)
 
-		if util.IsExist(binary.Path()) {
+		if util.IsExist(binary.Path()) { // 如果二进制文件已经存在，并且校验是正确的，那么就不再继续下载，否则重新下载
 			// download it again if it's incorrect
 			if err := binary.SHA256Check(); err != nil {
 				_ = exec.Command("/bin/sh", "-c", fmt.Sprintf("rm -f %s", binary.Path())).Run()

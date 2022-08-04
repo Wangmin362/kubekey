@@ -18,12 +18,13 @@ package binaries
 
 import (
 	"fmt"
+	"path/filepath"
+
 	mapset "github.com/deckarep/golang-set"
 	kubekeyapiv1alpha2 "github.com/kubesphere/kubekey/apis/kubekey/v1alpha2"
 	"github.com/kubesphere/kubekey/pkg/common"
 	"github.com/kubesphere/kubekey/pkg/core/connector"
 	"github.com/pkg/errors"
-	"path/filepath"
 )
 
 type Download struct {
@@ -114,7 +115,7 @@ func (a *ArtifactDownload) Execute(runtime connector.Runtime) error {
 	}
 
 	kubernetesSet := mapset.NewThreadUnsafeSet()
-	for _, k := range manifest.KubernetesDistributions {
+	for _, k := range manifest.KubernetesDistributions { // 支持多个K8S版本，也可以填写多个K3S版本
 		kubernetesSet.Add(k)
 	}
 

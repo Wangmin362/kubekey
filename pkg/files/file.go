@@ -19,15 +19,16 @@ package files
 import (
 	"crypto/sha256"
 	"fmt"
-	"github.com/kubesphere/kubekey/pkg/core/logger"
-	"github.com/kubesphere/kubekey/pkg/core/util"
-	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+
+	"github.com/kubesphere/kubekey/pkg/core/logger"
+	"github.com/kubesphere/kubekey/pkg/core/util"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -251,7 +252,7 @@ func (b *KubeBinary) Download() error {
 			}
 		}
 		if err = cmd.Wait(); err != nil {
-			if os.Getenv("KKZONE") != "cn" {
+			if os.Getenv("KKZONE") != "cn" { // fixme 这里是不是要优化以下，获取系统的地区，如果是在国内，就直接用国内源下载，没有必要要求用户手动写环境变量
 				logger.Log.Warningln("Having a problem with accessing https://storage.googleapis.com? You can try again after setting environment 'export KKZONE=cn'")
 			}
 			return err

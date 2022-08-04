@@ -19,12 +19,13 @@ package images
 import (
 	"encoding/json"
 	"fmt"
-	manifesttypes "github.com/estesp/manifest-tool/v2/pkg/types"
-	coreutil "github.com/kubesphere/kubekey/pkg/core/util"
-	"github.com/kubesphere/kubekey/pkg/registry"
 	"io/ioutil"
 	"path/filepath"
 	"strings"
+
+	manifesttypes "github.com/estesp/manifest-tool/v2/pkg/types"
+	coreutil "github.com/kubesphere/kubekey/pkg/core/util"
+	"github.com/kubesphere/kubekey/pkg/registry"
 
 	manifestregistry "github.com/estesp/manifest-tool/v2/pkg/registry"
 	kubekeyv1alpha2 "github.com/kubesphere/kubekey/apis/kubekey/v1alpha2"
@@ -142,22 +143,25 @@ type SaveImages struct {
 }
 
 func (s *SaveImages) Execute(runtime connector.Runtime) error {
+	// 这里应该是登录认证镜像仓库的一个动作
 	auths := registry.DockerRegistryAuthEntries(s.Manifest.Spec.ManifestRegistry.Auths)
 
+	// 镜像保存的位置
 	dirName := filepath.Join(runtime.GetWorkDir(), common.Artifact, "images")
 	if err := coreutil.Mkdir(dirName); err != nil {
 		return errors.Wrapf(errors.WithStack(err), "mkdir %s failed", dirName)
 	}
-	for _, image := range s.Manifest.Spec.Images {
+	for _, image := range s.Manifest.Spec.Images { // 依次遍历所有镜像
 		imageFullName := strings.Split(image, "/")
-		repo := imageFullName[0]
+		repo := imageFullName[0] // todo 从这里的代码可以看出，镜像必须是全路径，也就是必须是：<repo>/<namespace>/<image>:<tag>
 		auth := new(registry.DockerRegistryEntry)
-		if v, ok := auths[repo]; ok {
+		if v, ok := auths[repo]; ok { // 如果镜像涉及到了多个私有仓库，那么就需要在manifest.yaml sepc.registry.auths中配置多个镜像仓库的认证信息
 			auth = v
 		}
+		// fixme 这里应该要处理以下没有获取到私有仓库的认证信息的情况吧，下载私有仓库的公开镜像需要登录么？
 
 		srcName := fmt.Sprintf("docker://%s", image)
-		for _, platform := range s.Manifest.Spec.Arches {
+		for _, platform := range s.Manifest.Spec.Arches { // 不同平台需要下载的镜像不同
 			arch, variant := ParseArchVariant(platform)
 			// placeholder
 			if variant != "" {
@@ -193,6 +197,7 @@ func (s *SaveImages) Execute(runtime connector.Runtime) error {
 				},
 			}
 
+			// 这里的拷贝，因该就是在下载镜像
 			if err := o.Copy(); err != nil {
 				return err
 			}
