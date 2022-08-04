@@ -41,8 +41,8 @@ func NewCmdCreate() *cobra.Command {
 
 	o.CommonOptions.AddCommonFlag(cmd)
 
-	cmd.AddCommand(NewCmdCreateCluster())
-	cmd.AddCommand(NewCmdCreateConfig())
-	cmd.AddCommand(NewCmdCreateManifest())
+	cmd.AddCommand(NewCmdCreateCluster())  // 部署集群
+	cmd.AddCommand(NewCmdCreateConfig())   // 创建config.yaml文件，该文件是用于部署集群的配置文件，指定了集群的信息
+	cmd.AddCommand(NewCmdCreateManifest()) // 创建manifest.yaml资源清单文件，用于kk artifact export命令使用
 	return cmd
 }

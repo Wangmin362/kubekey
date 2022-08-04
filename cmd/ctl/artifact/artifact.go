@@ -46,7 +46,7 @@ func NewCmdArtifact() *cobra.Command {
 
 	o.CommonOptions.AddCommonFlag(cmd)
 
-	cmd.AddCommand(NewCmdArtifactExport()) // 制作离线安装包
-	cmd.AddCommand(images.NewCmdArtifactImages())
+	cmd.AddCommand(NewCmdArtifactExport())        // 制作离线安装包
+	cmd.AddCommand(images.NewCmdArtifactImages()) // todo 把manifest.yaml文件中的镜像推到镜像仓库当中
 	return cmd
 }

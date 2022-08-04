@@ -17,9 +17,10 @@
 package container
 
 import (
-	"github.com/kubesphere/kubekey/pkg/registry"
 	"path/filepath"
 	"strings"
+
+	"github.com/kubesphere/kubekey/pkg/registry"
 
 	"github.com/kubesphere/kubekey/pkg/common"
 	"github.com/kubesphere/kubekey/pkg/container/templates"
@@ -52,6 +53,7 @@ func (i *InstallContainerModule) Init() {
 		i.Tasks = InstallContainerd(i)
 	case common.Crio:
 		// TODO: Add the steps of cri-o's installation.
+		// fixme 这里难道不应该报错嘛，至少要提示用户暂时不支持啊
 	case common.Isula:
 		// TODO: Add the steps of iSula's installation.
 	default:

@@ -67,7 +67,7 @@ func (i *InstallationConfirm) Execute(runtime connector.Runtime) error {
 
 	pre := make([]map[string]string, 0, len(runtime.GetAllHosts()))
 	for _, host := range runtime.GetAllHosts() {
-		if v, ok := host.GetCache().Get(common.NodePreCheck); ok {
+		if v, ok := host.GetCache().Get(common.NodePreCheck); ok { // 缓存中的数据是有 NodePreCheckModule
 			pre = append(pre, v.(map[string]string))
 		} else {
 			return errors.New("get node check result failed by host cache")

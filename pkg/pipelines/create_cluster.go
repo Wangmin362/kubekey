@@ -51,7 +51,7 @@ import (
 )
 
 func NewCreateClusterPipeline(runtime *common.KubeRuntime) error {
-	noArtifact := runtime.Arg.Artifact == ""
+	noArtifact := runtime.Arg.Artifact == "" // 在线安装为true, 离线安装为false
 	skipPushImages := runtime.Arg.SKipPushImages || noArtifact || (!noArtifact && runtime.Cluster.Registry.PrivateRegistry == "")
 	skipLocalStorage := true
 	if runtime.Arg.DeployLocalStorage != nil {
@@ -61,38 +61,38 @@ func NewCreateClusterPipeline(runtime *common.KubeRuntime) error {
 	}
 
 	m := []module.Module{
-		&precheck.GreetingsModule{},
-		&precheck.NodePreCheckModule{},
-		&confirm.InstallConfirmModule{Skip: runtime.Arg.SkipConfirmCheck},
-		&artifact.UnArchiveModule{Skip: noArtifact},
-		&os.RepositoryModule{Skip: noArtifact || !runtime.Arg.InstallPackages},
-		&binaries.NodeBinariesModule{},
-		&os.ConfigureOSModule{},
-		&kubernetes.StatusModule{},
-		&container.InstallContainerModule{},
-		&images.CopyImagesToRegistryModule{Skip: skipPushImages},
-		&images.PullModule{Skip: runtime.Arg.SkipPullImages},
-		&etcd.PreCheckModule{Skip: runtime.Cluster.Etcd.Type != kubekeyapiv1alpha2.KubeKey},
-		&etcd.CertsModule{},
-		&etcd.InstallETCDBinaryModule{Skip: runtime.Cluster.Etcd.Type != kubekeyapiv1alpha2.KubeKey},
-		&etcd.ConfigureModule{Skip: runtime.Cluster.Etcd.Type != kubekeyapiv1alpha2.KubeKey},
-		&etcd.BackupModule{Skip: runtime.Cluster.Etcd.Type != kubekeyapiv1alpha2.KubeKey},
-		&kubernetes.InstallKubeBinariesModule{},
-		&kubernetes.InitKubernetesModule{},
-		&dns.ClusterDNSModule{},
-		&kubernetes.StatusModule{},
-		&kubernetes.JoinNodesModule{},
-		&loadbalancer.HaproxyModule{Skip: !runtime.Cluster.ControlPlaneEndpoint.IsInternalLBEnabled()},
-		&network.DeployNetworkPluginModule{},
-		&kubernetes.ConfigureKubernetesModule{},
-		&filesystem.ChownModule{},
-		&certs.AutoRenewCertsModule{Skip: !runtime.Cluster.Kubernetes.EnableAutoRenewCerts()},
-		&kubernetes.SaveKubeConfigModule{},
-		&plugins.DeployPluginsModule{},
-		&addons.AddonsModule{},
-		&storage.DeployLocalVolumeModule{Skip: skipLocalStorage},
-		&kubesphere.DeployModule{Skip: !runtime.Cluster.KubeSphere.Enabled},
-		&kubesphere.CheckResultModule{Skip: !runtime.Cluster.KubeSphere.Enabled},
+		&precheck.GreetingsModule{},                                                                    // 打印提示信息
+		&precheck.NodePreCheckModule{},                                                                 // 提示需要安装sudo, curl, openssl, ebtables, socat, ipset, ipvsadm, conntrack, chrony, docker, containerd, showmount, rbd, glusterfs软件
+		&confirm.InstallConfirmModule{Skip: runtime.Arg.SkipConfirmCheck},                              // 检查这些软件是安装了，尤其是sudo, socat, conntrack
+		&artifact.UnArchiveModule{Skip: noArtifact},                                                    // 校验MD5值，解压缩 kubekey-artifact.tar.gz离线软件安装包，如果是在线安装就跳过
+		&os.RepositoryModule{Skip: noArtifact || !runtime.Arg.InstallPackages},                         // 如果是离线安装，那么把iso文件挂在上，安装必要的软件，然后卸载
+		&binaries.NodeBinariesModule{},                                                                 // 下载etcd, kubeadm, kubelet, kubectl, helm ,kubecni, docker ,crictl等二进制文件 fixme 如果是离线安装，则不需要这一步，
+		&os.ConfigureOSModule{},                                                                        // 新建一个系统初始化脚本，放在/usr/local/bin/kube-scripts目录中，主要有关闭swap, selinux, 修改hosts文件等等
+		&kubernetes.StatusModule{},                                                                     // 查看集群状态
+		&container.InstallContainerModule{},                                                            // 安装ContainerManger，譬如docker, containerd
+		&images.CopyImagesToRegistryModule{Skip: skipPushImages},                                       // 把离线安装包中的镜像，推送到私有仓库中 (todo 所以需要提前执行kk init registry命令安装私有仓库，当然如果已经存在私有仓库，那么无需执行)
+		&images.PullModule{Skip: runtime.Arg.SkipPullImages},                                           // 在每个节点上把需要的镜像从私有仓库中拉取下来，譬如 etcd, pause, kube-apiserver, scheduler,proxy, coredns, cni ,clium, flannel等等 （fixme, 这里可以优化一下，根据不同节点的角色不同，拉取镜像，而不是一股脑拉取所有镜像）
+		&etcd.PreCheckModule{Skip: runtime.Cluster.Etcd.Type != kubekeyapiv1alpha2.KubeKey},            // 检查etcd的状态
+		&etcd.CertsModule{},                                                                            // 准备etcd集群签发证书
+		&etcd.InstallETCDBinaryModule{Skip: runtime.Cluster.Etcd.Type != kubekeyapiv1alpha2.KubeKey},   // 安装etcd集群
+		&etcd.ConfigureModule{Skip: runtime.Cluster.Etcd.Type != kubekeyapiv1alpha2.KubeKey},           // 配置etcd
+		&etcd.BackupModule{Skip: runtime.Cluster.Etcd.Type != kubekeyapiv1alpha2.KubeKey},              // 备份etcd的数据
+		&kubernetes.InstallKubeBinariesModule{},                                                        // 安装kubeadm, kubelet, kubectl, helm, kubecni的组件
+		&kubernetes.InitKubernetesModule{},                                                             // 初始化集群，生成 ~/.kube/config文件
+		&dns.ClusterDNSModule{},                                                                        // 利用已经创建好的集群，部署coredns服务
+		&kubernetes.StatusModule{},                                                                     // 查看集群状态
+		&kubernetes.JoinNodesModule{},                                                                  // kubeadm join node to master
+		&loadbalancer.HaproxyModule{Skip: !runtime.Cluster.ControlPlaneEndpoint.IsInternalLBEnabled()}, // 安装Haproxy，反向代理 api-server
+		&network.DeployNetworkPluginModule{},                                                           // 安装网络插件
+		&kubernetes.ConfigureKubernetesModule{},                                                        // 利用kubectl给各个节点打上标签
+		&filesystem.ChownModule{},                                                                      // 修改 ~/.kube/config的权限
+		&certs.AutoRenewCertsModule{Skip: !runtime.Cluster.Kubernetes.EnableAutoRenewCerts()},          // 生成自动更新证书的脚本，放在/usr/local/bin/kube-scripts/k8s-certs-renew.sh文件当中
+		&kubernetes.SaveKubeConfigModule{},                                                             // 把kubeconfig文件以configmap的形式保存在k8s集群中
+		&plugins.DeployPluginsModule{},                                                                 // 部署容器运行时，譬如kata container
+		&addons.AddonsModule{},                                                                         // 安装 config.yaml 中的spec.addons自定义模块，实际上就是通过部署 kubectl apply -f 命令部署的
+		&storage.DeployLocalVolumeModule{Skip: skipLocalStorage},                                       // 部署 OpenEBS
+		&kubesphere.DeployModule{Skip: !runtime.Cluster.KubeSphere.Enabled},                            // 通过部署ks-installer 安装 kubesphere,
+		&kubesphere.CheckResultModule{Skip: !runtime.Cluster.KubeSphere.Enabled},                       // 检查 kubesphere 的安装结果
 	}
 
 	p := pipeline.Pipeline{
@@ -248,7 +248,7 @@ func CreateCluster(args common.Argument, downloadCmd string) error {
 	if args.FilePath != "" {
 		loaderType = common.File
 	} else {
-		loaderType = common.AllInOne
+		loaderType = common.AllInOne // 没有指定配置文件的情况下，就是在kk二进制文件所在的机器上部署一个单节点的K8S集群
 	}
 
 	runtime, err := common.NewKubeRuntime(loaderType, args)

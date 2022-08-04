@@ -18,6 +18,8 @@ package create
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/kubesphere/kubekey/cmd/ctl/options"
 	"github.com/kubesphere/kubekey/cmd/ctl/util"
 	"github.com/kubesphere/kubekey/pkg/common"
@@ -25,7 +27,6 @@ import (
 	"github.com/kubesphere/kubekey/pkg/version/kubernetes"
 	"github.com/kubesphere/kubekey/pkg/version/kubesphere"
 	"github.com/spf13/cobra"
-	"time"
 )
 
 type CreateClusterOptions struct {
@@ -95,7 +96,7 @@ func (o *CreateClusterOptions) Complete(cmd *cobra.Command, args []string) error
 
 func (o *CreateClusterOptions) Validate(_ *cobra.Command, _ []string) error {
 	switch o.ContainerManager {
-	case common.Docker, common.Conatinerd, common.Crio, common.Isula:
+	case common.Docker, common.Conatinerd, common.Crio, common.Isula: // 目前容器管理工具仅支持docker, containerd, crio, isula
 	default:
 		return fmt.Errorf("unsupport container runtime [%s]", o.ContainerManager)
 	}

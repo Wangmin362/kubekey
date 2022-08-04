@@ -206,6 +206,7 @@ func (e *ConfigureModule) Init() {
 
 	if v, ok := e.PipelineCache.Get(common.ETCDCluster); ok {
 		cluster := v.(*EtcdCluster)
+		// fixme 感觉这样写代码不是很好，为啥要取反呢，阅读代码的人还得反转一下逻辑
 		if !cluster.clusterExist {
 			e.Tasks = handleNewCluster(e)
 		} else {

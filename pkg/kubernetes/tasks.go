@@ -58,12 +58,12 @@ type GetClusterStatus struct {
 }
 
 func (g *GetClusterStatus) Execute(runtime connector.Runtime) error {
-	exist, err := runtime.GetRunner().FileExist("/etc/kubernetes/admin.conf")
+	exist, err := runtime.GetRunner().FileExist("/etc/kubernetes/admin.conf") // todo 这个文件一般是不存在的吧
 	if err != nil {
 		return err
 	}
 
-	if !exist {
+	if !exist { //
 		g.PipelineCache.Set(common.ClusterExist, false)
 		return nil
 	} else {
