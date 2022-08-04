@@ -38,19 +38,19 @@ func NewUpgradeClusterPipeline(runtime *common.KubeRuntime) error {
 	noArtifact := runtime.Arg.Artifact == ""
 
 	m := []module.Module{
-		&precheck.GreetingsModule{},
-		&precheck.NodePreCheckModule{},
-		&precheck.ClusterPreCheckModule{},
-		&confirm.UpgradeConfirmModule{Skip: runtime.Arg.SkipConfirmCheck},
-		&artifact.UnArchiveModule{Skip: noArtifact},
-		&kubernetes.SetUpgradePlanModule{Step: kubernetes.ToV121},
-		&kubernetes.ProgressiveUpgradeModule{Step: kubernetes.ToV121},
-		&loadbalancer.HaproxyModule{Skip: !runtime.Cluster.ControlPlaneEndpoint.IsInternalLBEnabled()},
-		&kubesphere.CleanClusterConfigurationModule{Skip: !runtime.Cluster.KubeSphere.Enabled},
-		&kubesphere.ConvertModule{Skip: !runtime.Cluster.KubeSphere.Enabled},
-		&kubesphere.DeployModule{Skip: !runtime.Cluster.KubeSphere.Enabled},
-		&kubesphere.CheckResultModule{Skip: !runtime.Cluster.KubeSphere.Enabled},
-		&kubernetes.SetUpgradePlanModule{Step: kubernetes.ToV122},
+		&precheck.GreetingsModule{},                                                                    // 打印kubekey标志语句
+		&precheck.NodePreCheckModule{},                                                                 // 检查系统软件的安装情况
+		&precheck.ClusterPreCheckModule{},                                                              // 检查当前K8S集群的状态信息
+		&confirm.UpgradeConfirmModule{Skip: runtime.Arg.SkipConfirmCheck},                              // 提示用户是否真的需要升级集群
+		&artifact.UnArchiveModule{Skip: noArtifact},                                                    // 解压缩离线安装包
+		&kubernetes.SetUpgradePlanModule{Step: kubernetes.ToV121},                                      // 升级到 1.21的检测工作
+		&kubernetes.ProgressiveUpgradeModule{Step: kubernetes.ToV121},                                  // 准备必要的安装文件
+		&loadbalancer.HaproxyModule{Skip: !runtime.Cluster.ControlPlaneEndpoint.IsInternalLBEnabled()}, // 安装Haproxy
+		&kubesphere.CleanClusterConfigurationModule{Skip: !runtime.Cluster.KubeSphere.Enabled},         //
+		&kubesphere.ConvertModule{Skip: !runtime.Cluster.KubeSphere.Enabled},                           // 把ks-installer的版本从v2切换到v3
+		&kubesphere.DeployModule{Skip: !runtime.Cluster.KubeSphere.Enabled},                            // 部署ks-installer
+		&kubesphere.CheckResultModule{Skip: !runtime.Cluster.KubeSphere.Enabled},                       // 检查ks-installer的部署情况
+		&kubernetes.SetUpgradePlanModule{Step: kubernetes.ToV122},                                      // 升级到1.22的检测工作
 		&kubernetes.ProgressiveUpgradeModule{Step: kubernetes.ToV122},
 		&filesystem.ChownModule{},
 		&certs.AutoRenewCertsModule{Skip: !runtime.Cluster.Kubernetes.EnableAutoRenewCerts()},
