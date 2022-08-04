@@ -28,11 +28,11 @@ import (
 
 func DeleteNodePipeline(runtime *common.KubeRuntime) error {
 	m := []module.Module{
-		&precheck.GreetingsModule{},
-		&confirm.DeleteNodeConfirmModule{},
-		&kubernetes.CompareConfigAndClusterInfoModule{},
-		&kubernetes.DeleteKubeNodeModule{},
-		&os.ClearNodeOSModule{},
+		&precheck.GreetingsModule{},                     // 打印kk标志语
+		&confirm.DeleteNodeConfirmModule{},              // 跟用户确认是否真的要删除节点
+		&kubernetes.CompareConfigAndClusterInfoModule{}, // 获取到需要删除的节点
+		&kubernetes.DeleteKubeNodeModule{},              // 1、kubectl drain  2、kubectl delete node
+		&os.ClearNodeOSModule{},                         // 重置网络，删除不必要的文件，重启systemd
 	}
 
 	p := pipeline.Pipeline{
