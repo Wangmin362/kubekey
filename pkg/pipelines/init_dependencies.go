@@ -30,11 +30,11 @@ func NewInitDependenciesPipeline(runtime *common.KubeRuntime) error {
 	noArtifact := runtime.Arg.Artifact == ""
 
 	m := []module.Module{
-		&precheck.GreetingsModule{},
-		&artifact.UnArchiveModule{Skip: noArtifact},
-		&os.RepositoryModule{Skip: noArtifact},
-		&os.RepositoryOnlineModule{Skip: !noArtifact},
-		&filesystem.ChownWorkDirModule{},
+		&precheck.GreetingsModule{},                   // 打印kubekey标志语句
+		&artifact.UnArchiveModule{Skip: noArtifact},   // 解压缩离线安装包
+		&os.RepositoryModule{Skip: noArtifact},        // 离线安装：挂载iso文件，安装必要的软件，然后卸载
+		&os.RepositoryOnlineModule{Skip: !noArtifact}, // 在线安装：安装依赖的软件，比如socat, conntrack
+		&filesystem.ChownWorkDirModule{},              // 修改.kubekey的 uid gid
 	}
 
 	p := pipeline.Pipeline{
