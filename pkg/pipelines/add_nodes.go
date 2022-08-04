@@ -18,6 +18,7 @@ package pipelines
 
 import (
 	"fmt"
+
 	kubekeyapiv1alpha2 "github.com/kubesphere/kubekey/apis/kubekey/v1alpha2"
 	kubekeycontroller "github.com/kubesphere/kubekey/controllers/kubekey"
 	"github.com/kubesphere/kubekey/pkg/artifact"
@@ -44,28 +45,28 @@ func NewAddNodesPipeline(runtime *common.KubeRuntime) error {
 	noArtifact := runtime.Arg.Artifact == ""
 
 	m := []module.Module{
-		&precheck.GreetingsModule{},
-		&precheck.NodePreCheckModule{},
-		&confirm.InstallConfirmModule{Skip: runtime.Arg.SkipConfirmCheck},
-		&artifact.UnArchiveModule{Skip: noArtifact},
-		&os.RepositoryModule{Skip: noArtifact || !runtime.Arg.InstallPackages},
-		&binaries.NodeBinariesModule{},
-		&os.ConfigureOSModule{},
-		&registry.RegistryCertsModule{Skip: len(runtime.GetHostsByRole(common.Registry)) == 0},
-		&kubernetes.StatusModule{},
-		&container.InstallContainerModule{},
-		&images.PullModule{Skip: runtime.Arg.SkipPullImages},
-		&etcd.PreCheckModule{Skip: runtime.Cluster.Etcd.Type != kubekeyapiv1alpha2.KubeKey},
-		&etcd.CertsModule{},
-		&etcd.InstallETCDBinaryModule{Skip: runtime.Cluster.Etcd.Type != kubekeyapiv1alpha2.KubeKey},
-		&etcd.ConfigureModule{Skip: runtime.Cluster.Etcd.Type != kubekeyapiv1alpha2.KubeKey},
-		&etcd.BackupModule{Skip: runtime.Cluster.Etcd.Type != kubekeyapiv1alpha2.KubeKey},
-		&kubernetes.InstallKubeBinariesModule{},
-		&kubernetes.JoinNodesModule{},
-		&loadbalancer.HaproxyModule{Skip: !runtime.Cluster.ControlPlaneEndpoint.IsInternalLBEnabled()},
-		&kubernetes.ConfigureKubernetesModule{},
-		&filesystem.ChownModule{},
-		&certs.AutoRenewCertsModule{Skip: !runtime.Cluster.Kubernetes.EnableAutoRenewCerts()},
+		&precheck.GreetingsModule{},                                                                    // 打印标志语
+		&precheck.NodePreCheckModule{},                                                                 // 检查sudo ,curl, openssl, ebtables, socat, ipset, ipvasdm, conntrack,chrony, docker, containerd, showmount, rbd, glusterfs等软件是否安装并给出提示
+		&confirm.InstallConfirmModule{Skip: runtime.Arg.SkipConfirmCheck},                              // 检查socat, conntrack软件是否安装
+		&artifact.UnArchiveModule{Skip: noArtifact},                                                    // 加压缩离线安装包
+		&os.RepositoryModule{Skip: noArtifact || !runtime.Arg.InstallPackages},                         // 如果是在线安装，就需要安装镜像仓库
+		&binaries.NodeBinariesModule{},                                                                 // 下载etcd, kubeadm, kubelet, kubecni等等二进制软件
+		&os.ConfigureOSModule{},                                                                        // 初始化系统的脚本
+		&registry.RegistryCertsModule{Skip: len(runtime.GetHostsByRole(common.Registry)) == 0},         // 同步镜像仓库证书
+		&kubernetes.StatusModule{},                                                                     // 获取集群状态
+		&container.InstallContainerModule{},                                                            // 安装容器管理器，譬如congtainerd, crio
+		&images.PullModule{Skip: runtime.Arg.SkipPullImages},                                           // 拉取诸如kube-proxy, coredns, kube-scheduler等等镜像
+		&etcd.PreCheckModule{Skip: runtime.Cluster.Etcd.Type != kubekeyapiv1alpha2.KubeKey},            // 检测etcd的状态
+		&etcd.CertsModule{},                                                                            // 同步etcd证书
+		&etcd.InstallETCDBinaryModule{Skip: runtime.Cluster.Etcd.Type != kubekeyapiv1alpha2.KubeKey},   // 安装etcd
+		&etcd.ConfigureModule{Skip: runtime.Cluster.Etcd.Type != kubekeyapiv1alpha2.KubeKey},           // 生成etcd配置文件
+		&etcd.BackupModule{Skip: runtime.Cluster.Etcd.Type != kubekeyapiv1alpha2.KubeKey},              // etcd的备份功能
+		&kubernetes.InstallKubeBinariesModule{},                                                        // 安装服务，譬如kubelet
+		&kubernetes.JoinNodesModule{},                                                                  // 利用kubeadm加入节点
+		&loadbalancer.HaproxyModule{Skip: !runtime.Cluster.ControlPlaneEndpoint.IsInternalLBEnabled()}, // 安装haproxy，反向代理 api-server
+		&kubernetes.ConfigureKubernetesModule{},                                                        // 利用 kubectl 给各个节点打上标签
+		&filesystem.ChownModule{},                                                                      // 修改 ~/.kube/config的uid gid
+		&certs.AutoRenewCertsModule{Skip: !runtime.Cluster.Kubernetes.EnableAutoRenewCerts()},          // 生成自动更新证书的脚本
 	}
 
 	p := pipeline.Pipeline{
